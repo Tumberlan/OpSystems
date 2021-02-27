@@ -7,6 +7,12 @@
 #IncludeRegexTransform: 
 
 C:/Users/Igor/ProgProjects/OpSystems/OClab2/main.c
+sys/types.h
+-
 stdio.h
+-
+time.h
+-
+stdlib.h
 -
 
