@@ -5,7 +5,7 @@
 
 int main()
 {
-    if(putenv("TZ=America/Los_Angeles")==1){
+    if(putenv("TZ=America/Los_Angeles") == -1){
         perror("putenv failed");
         exit(1);
     } //модифицируем значение переменной окружения TZ под то, которое нам нужно, чтобы
