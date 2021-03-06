@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+C:/Users/Igor/ProgProjects/OpSystems/OClab4/main.c
+stdio.h
+-
+malloc.h
+-
+string.h
+-
+stdbool.h
+-
+
