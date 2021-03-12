@@ -65,13 +65,16 @@ void append(struct list* L,const char* str){
 char* take_string(bool* is_end){
     int len_of_str = (int)strlen((const char *) stdin);
     char* str = (char*)malloc(sizeof (char) * len_of_str);
-
+    if(str == NULL){
+        perror("no memory for new list");
+        exit(1);
+    }
 
     if(fgets(str, len_of_str+1, stdin) == NULL){
         int file_checker = ferror(stdin);// ferror проверяет, имеются ли файловые ошибки в заданном потоке(stdin), возврат 0 означает отсутствие ошибок, а ненулевая величина указывает на наличие ошибки
         if(file_checker != 0){
             perror("errors in stdin");
-            exit(1);
+            exit(3);
         }
     }
     //fgets считывает до num-1 символов из файла, указанного как stdin(стандартный
@@ -102,21 +105,21 @@ void print_list(struct list* lst){
     int print_check = 0;
     if(lst == NULL){
         perror("nothing to print");
-        exit(2);
+        exit(4);
     }
     struct list* new = lst;
 
     print_check = printf("Here is your list: \n");
     if(print_check < 0){
         perror("can't print");
-        exit(3);
+        exit(5);
     }
     while(new->next != NULL){
         for(int i = 0; i < (int)strlen(new->string); i++){
             print_check = printf("%c", new->string[i]);
             if(print_check < 0){
                 perror("can't print");
-                exit(3);
+                exit(5);
             }
         }
         new = new->next;
@@ -125,7 +128,7 @@ void print_list(struct list* lst){
         print_check = printf("%c", new->string[i]);
         if(print_check < 0){
             perror("can't print");
-            exit(3);
+            exit(5);
         }
     }
 }
