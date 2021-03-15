@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>
-
+#define MAX_SIZE 150
 // создаем структуру list, которая содержит строку и указатель на следующий элемент нашего списка
 
 struct list{
@@ -14,30 +14,20 @@ struct list{
 // функция инициализации списка, выделяем память под строку, которую хотим вставить, вставляем её, т.к. у нас список строится
 // от 1 элемента на данный момент, указатель на последующий элемент = NULL, т.е. наш вставленный элемент одновременно
 // и голова списка и его конец
-struct list init_list(const char* str){
-    int len_of_str = (int)strlen(str);
+struct list* init_list(char* str){
     struct list* lst = (struct list*)malloc(sizeof (struct list));
     if(lst == NULL){
         perror("no memory for new list");
         exit(1);
     }
-    lst->string = (char*)malloc(sizeof (char)*len_of_str);
-    if(lst->string == NULL){
-        perror("no memory for new string in list element");
-        exit(2);
-    }
-
-    for(int i = 0; i < len_of_str; i++){
-        lst->string[i] = str[i];
-    }
+    lst->string = str;
     lst->next = NULL;
-    return *lst;
+    return lst;
 }
 
 // функция добавления элемента в список, элемент добавляется в конец списка(создаем объект типа struct list, на основе аргумента str,
 // у него поле next = NULL, к последнему элементу списка вместо указателя NULL присваеваем наш, созданный объект, теперь он - конец списка)
-void append(struct list* L,const char* str){
-    int len_of_str = (int)strlen(str); // strlen возвращает длину строки, оканчивающейся нулевым символом, на которую указывает str, при определении длины строки нулевой символ не учитывается
+void append(struct list* L, char* str){
     struct list* lst = L;
     while(lst->next != NULL){
         lst = lst->next;
@@ -47,14 +37,7 @@ void append(struct list* L,const char* str){
         perror("no memory for new list");
         exit(1);
     }
-    new->string = (char*)malloc(sizeof (char )*len_of_str);
-    if(new->string == NULL){
-        perror("no memory for new string in list element");
-        exit(2);
-    }
-    for(int i = 0; i < len_of_str; i++){
-        new->string[i] = str[i];
-    }
+    new->string = str;
     new->next = NULL;
     lst->next = new;
 }
@@ -63,14 +46,13 @@ void append(struct list* L,const char* str){
 // является ли она последней, если да, то меняем значение переменной is_end на true, чтобы в другой функции
 // сообщить о том, что нужно закончить процесс ввода строк, возвращаем полученную строку
 char* take_string(bool* is_end){
-    int len_of_str = (int)strlen((const char *) stdin);
-    char* str = (char*)malloc(sizeof (char) * len_of_str);
+    char* str = (char*)malloc(sizeof (char) * MAX_SIZE);
     if(str == NULL){
         perror("no memory for new list");
         exit(1);
     }
 
-    if(fgets(str, len_of_str+1, stdin) == NULL){
+    if(fgets(str, MAX_SIZE, stdin) == NULL){
         int file_checker = ferror(stdin);// ferror проверяет, имеются ли файловые ошибки в заданном потоке(stdin), возврат 0 означает отсутствие ошибок, а ненулевая величина указывает на наличие ошибки
         if(file_checker != 0){
             perror("errors in stdin");
@@ -115,7 +97,7 @@ void print_list(struct list* lst){
         exit(5);
     }
     while(new->next != NULL){
-        for(int i = 0; i < (int)strlen(new->string); i++){
+        for(int i = 0; i < (int)strlen(new->string) ; i++){ //strlen возвращает длину строки, оканчивающейся нулевым символом, на которую указывает str, при определении длины строки нулевой символ не учитывается
             print_check = printf("%c", new->string[i]);
             if(print_check < 0){
                 perror("can't print");
@@ -124,7 +106,7 @@ void print_list(struct list* lst){
         }
         new = new->next;
     }
-    for (int i = 0; i < (int)strlen(new->string); i++) {
+    for (int i = 0; i < (int)strlen(new->string) ; i++) {
         print_check = printf("%c", new->string[i]);
         if(print_check < 0){
             perror("can't print");
@@ -133,17 +115,29 @@ void print_list(struct list* lst){
     }
 }
 
+void list_free(struct list* lst){
+    struct list* next = lst->next;
+    while(lst->next != NULL){
+        free(lst->string);
+        free(lst);
+        lst = next;
+        next = lst->next;
+    }
+    free(lst->string);
+    free(lst);
+}
 
 int main() {
     bool checker = false;
     char* str = take_string(&checker);
 
-    struct list lst = init_list(str);
+    struct list* lst = init_list(str);
 
     if(!checker){
-    fill_list(&lst);
+        fill_list(lst);
     }
 
-    print_list(&lst);
+    print_list(lst);
+    list_free(lst);
     return 0;
 }
