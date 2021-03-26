@@ -7,6 +7,7 @@
 #define INIT_MEMORY_FAULT 1
 #define ADD_MEMORY_FAULT 2
 #define PRINT_FAULT 3
+#define EVERYTHING_OK 4
 // создаем структуру list, которая содержит строку и указатель на следующий элемент нашего списка
 
 struct list{
@@ -21,9 +22,8 @@ struct list* init_list(char* str){
     struct list* lst = (struct list*)malloc(sizeof (struct list));
     if(lst == NULL){
         perror("no memory for new list");
-        free(lst);
         free(str);
-        exit(INIT_MEMORY_FAULT);
+        return NULL;
     }
     lst->string = str;
     lst->next = NULL;
@@ -77,7 +77,7 @@ char* take_string(bool* is_end){
     if(str == NULL){
         perror("no memory for new string");
         free(str);
-        exit(ADD_MEMORY_FAULT);
+        return NULL;
     }
 
     if(fgets(str, MAX_SIZE, stdin) == NULL){
@@ -115,7 +115,7 @@ void fill_list(struct list* lst){
 
 // функция вывода списка, идем по списку и выводим каждую строчку элемента списка struct_list, пока не дойдем до такого
 // элемента, в котором next будет равен NULL
-void print_list(struct list* lst){
+int print_list(struct list* lst){
     int print_check = 0;
     if(lst == NULL){
         printf("empty list");
@@ -126,7 +126,7 @@ void print_list(struct list* lst){
         if (print_check < 0) {
             perror("can't print");
             list_free(lst);
-            exit(PRINT_FAULT);
+            return (PRINT_FAULT);
         }
         while (new->next != NULL) {
             int len_str = (int)strlen(new->string);//strlen возвращает длину строки, оканчивающейся нулевым символом, на которую указывает str, при определении длины строки нулевой символ не учитывается
@@ -136,7 +136,7 @@ void print_list(struct list* lst){
                 if (print_check < 0) {
                     list_free(lst);
                     perror("can't print");
-                    exit(PRINT_FAULT);
+                    return (PRINT_FAULT);
                 }
                 i++;
             }
@@ -149,17 +149,21 @@ void print_list(struct list* lst){
             if (print_check < 0) {
                 perror("can't print");
                 list_free(lst);
-                exit(PRINT_FAULT);
+                return (PRINT_FAULT);
             }
             i++;
         }
     }
+    return EVERYTHING_OK;
 }
 
 
 int main() {
     bool checker = false;
     char* str = take_string(&checker);
+    if(str == NULL){
+        exit(0);
+    }
     while(str == NULL){
         printf("try again");
         perror("mistakes in input");
@@ -172,7 +176,11 @@ int main() {
         fill_list(lst);
     }
 
-    print_list(lst);
+    if(print_list(lst) != EVERYTHING_OK){
+        list_free(lst){
+            return 0;
+        }
+    }
     list_free(lst);
     return 0;
 }
