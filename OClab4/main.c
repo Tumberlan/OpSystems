@@ -119,6 +119,7 @@ int print_list(struct list* lst){
     int print_check = 0;
     if(lst == NULL){
         printf("empty list");
+    //    return;
     }else {
         struct list *new = lst;
 
@@ -177,9 +178,8 @@ int main() {
     }
 
     if(print_list(lst) != EVERYTHING_OK){
-        list_free(lst){
-            return 0;
-        }
+        list_free(lst);
+        return 0;
     }
     list_free(lst);
     return 0;
