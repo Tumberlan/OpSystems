@@ -103,7 +103,6 @@ char* take_string(bool* is_end){
     }
 
     if(str[local_size-1] == end_symbol){
-        printf("OKEY\n");
         return str;
     }
     while(true) {
@@ -122,33 +121,24 @@ char* take_string(bool* is_end){
         local_size+=len;
 
 
-        char* new_str = (char*)malloc((local_size+1)*sizeof (char));
+        char* new_str = (char*)malloc((local_size)*sizeof (char));
         for(int i = 0; i < local_size-len; i++){
             new_str[i] = ptr[i];
         }
         for(int i = 0; i < len; i++){
-            new_str[local_size-len+i] = new_str[i];
+            new_str[local_size-len+i] = next_str[i];
         }
         free(ptr);
         ptr = (char*)malloc((local_size+1)*sizeof (char));
         for(int i = 0; i < local_size; i++){
             ptr[i] = new_str[i];
         }
+
         if(len < MAX_SIZE-1 || next_str[len-1] == end_symbol){
-            new_str[local_size] = '\n';
-            printf("OKEY\n");
             return new_str;
         }
         free(next_str);
     }
-
-
-
-
-
-
-
-
 
     //fgets считывает до num-1 символов из файла, указанного как stdin(стандартный
     // ввод - чтение с устройства текстового интерфейса пользователя(клавиатуры)), и помещает их в массив указанный первым
@@ -156,8 +146,6 @@ char* take_string(bool* is_end){
     // по окончании считывания в массив str сразу после последнего считанного символа помещается нулевой символ, символ новой строки при считывании
     // сохраняется и становится частью массива str. если функция отработала верно, то она возвращает str, иначе NULL, т.к. как в случае ошибки, так
     // и при достижении конца файла возвращается null, для определения того, что именно произошло мы использовали ferror
-
-
 
 }
 
