@@ -93,7 +93,6 @@ char* take_string(bool* is_end){
         }
     }
 
-    bool is_loop = true;
     char* ptr = str;
     int local_size = strlen(str);
 
