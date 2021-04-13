@@ -114,10 +114,18 @@ void print_table(table* T){
 
 bool print_numbered_line(table* T, int fd){
     int number;
-    scanf("%d", &number);
+    int scanf_checker = scanf("%d", &number);
+    while(scanf_checker != 1){
+        printf("wrong number of arguments\n");
+        scanf_checker = scanf("%d", number);
+    }
     while(number > T->curr_len || number < 0){
         printf("unavailable line number, please enter another number\n");
-        scanf("%d", &number);
+        scanf_checker = scanf("%d", number);
+        while(scanf_checker != 1){
+            printf("wrong number of arguments\n");
+            scanf_checker = scanf("%d", number);
+        }
     }
     while (number != 0) {
         number--;
@@ -163,7 +171,11 @@ bool print_file(table* T, int fd){
 int main() {
 
     char filename[BUF_SIZE];
-    scanf("%s", filename);
+    int scanf_checker = scanf("%s", filename);
+    while(scanf_checker != 1){
+        printf("wrong number of arguments\n");
+        scanf_checker = scanf("%s", filename);
+    }
 
     int fd;
     int fd_checker = (fd = open(filename,O_RDONLY));
