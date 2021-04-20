@@ -14,6 +14,7 @@
 #define FILL_TABLE_FAIL 4
 #define PRINT_LINE_FAIL 5
 #define READ_ERROR 6
+#define CLOSE_FILE_FAIL 7
 
 
 typedef struct t_e{
@@ -211,5 +212,9 @@ int main() {
     }
 
     free_table(my_table);
+    int close_f_check = close(fd);
+    if(close_f_check == -1){
+        exit(7);
+    }
     return 0;
 }
