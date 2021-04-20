@@ -10,7 +10,7 @@
 // создаем структуру list, которая содержит строку и указатель на следующий элемент нашего списка
 
 struct list{
-    char* string;
+    char* str;
     int len;
     struct list* next;
 };
@@ -25,7 +25,7 @@ struct list* init_list(char* str, int l){
         free(str);
         return NULL;
     }
-    lst->string = str;
+    lst->str = str;
     lst->len = l;
     lst->next = NULL;
     return lst;
@@ -38,12 +38,12 @@ void list_free(struct list* lst){
     }
     struct list *next = lst->next;
     while (lst->next != NULL) {
-        free(lst->string);
+        free(lst->str);
         free(lst);
         lst = next;
         next = lst->next;
     }
-    free(lst->string);
+    free(lst->str);
     free(lst);
 
 }
@@ -65,7 +65,7 @@ bool append(struct list* L, char* str, int l){
         perror("mistakes in input");
         return false;
     }
-    new->string = str;
+    new->str = str;
     new->len = l;
     new->next = NULL;
     lst->next = new;
@@ -75,12 +75,12 @@ bool append(struct list* L, char* str, int l){
 // функция взятия строки, создаем новую строку с помощью malloc, с помощью fgets берем строку, проверяем её на то
 // является ли она последней, если да, то меняем значение переменной is_end на true, чтобы в другой функции
 // сообщить о том, что нужно закончить процесс ввода строк, возвращаем полученную строку
-char* take_string(bool* is_end, int* l){
+char* take_str(bool* is_end, int* l){
 
 
     char* str = (char*)malloc(sizeof (char) * MAX_SIZE);
     if(str == NULL){
-        perror("no memory for new string");
+        perror("no memory for new str");
         return NULL;
     }
     char end_symbol = '\n';
@@ -90,7 +90,6 @@ char* take_string(bool* is_end, int* l){
         int file_checker = ferror(stdin);// ferror проверяет, имеются ли файловые ошибки в заданном потоке(stdin), возврат 0 означает отсутствие ошибок, а ненулевая величина указывает на наличие ошибки
         if(file_checker != 0){
             perror("errors in stdin");
-            free(str);
             return NULL;
         }
     }
@@ -114,7 +113,6 @@ char* take_string(bool* is_end, int* l){
             int file_checker = ferror(stdin);
             if(file_checker != 0){
                 perror("errors in stdin");
-                free(str);
                 return NULL;
             }
         }
@@ -123,7 +121,7 @@ char* take_string(bool* is_end, int* l){
 
         str = realloc(str, (size+new_len)*sizeof(char));
         if(str == NULL){
-            perror("no memory for new string");
+            perror("no memory for new str");
             return NULL;
         }
         for(int i = 0; i < new_len;i ++){
@@ -149,12 +147,12 @@ char* take_string(bool* is_end, int* l){
 
 }
 
-//функция заполнения списка, вставляем новые строки, пока маркер is_end не станет false во время функции take_string
+//функция заполнения списка, вставляем новые строки, пока маркер is_end не станет false во время функции take_str
 bool fill_list(struct list* lst){
     bool is_end = false;
     while(!is_end){
         int l = 0;
-        char* s = take_string(&is_end, &l);
+        char* s = take_str(&is_end, &l);
         bool append_checker = append(lst, s,l);
         if(append_checker == false){
             return false;
@@ -178,16 +176,16 @@ int print_list(struct list* lst){
     print_check = printf("Here is your list: \n");
     if (print_check < 0) {
         perror("can't print");
-        list_free(lst);
+        list_free(new);
         return (PRINT_FAULT);
     }
     while (new->next != NULL) {
         //strlen возвращает длину строки, оканчивающейся нулевым символом, на которую указывает str, при определении длины строки нулевой символ не учитывается
         int i = 0;
         while(i < new->len) {
-            print_check = printf("%c", new->string[i]);
+            print_check = printf("%c", new->str[i]);
             if (print_check < 0) {
-                list_free(lst);
+                list_free(new);
                 perror("can't print");
                 return (PRINT_FAULT);
             }
@@ -197,10 +195,10 @@ int print_list(struct list* lst){
     }
     int i = 0;
     while (i < new->len) {
-        print_check = printf("%c", new->string[i]);
+        print_check = printf("%c", new->str[i]);
         if (print_check < 0) {
             perror("can't print");
-            list_free(lst);
+            list_free(new);
             return (PRINT_FAULT);
         }
         i++;
@@ -213,11 +211,11 @@ int print_list(struct list* lst){
 int main() {
     bool checker = false;
     int l = 0;
-    char* str = take_string(&checker, &l);
+    char* str = take_str(&checker, &l);
     while(str == NULL){
         printf("try again");
         perror("mistakes in input");
-        str = take_string(&checker, &l);
+        str = take_str(&checker, &l);
     }
     struct list* lst = init_list(str,l);
     if(!checker){
