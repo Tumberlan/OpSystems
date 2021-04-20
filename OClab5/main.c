@@ -214,7 +214,7 @@ int main() {
     free_table(my_table);
     int close_f_check = close(fd);
     if(close_f_check == -1){
-        exit(7);
+        exit(CLOSE_FILE_FAIL);
     }
     return 0;
 }
