@@ -13,6 +13,7 @@
 #define OPEN_FILE_FAIL 3
 #define FILL_TABLE_FAIL 4
 #define PRINT_LINE_FAIL 5
+#define READ_ERROR 6
 
 
 typedef struct t_e{
@@ -63,16 +64,20 @@ void add_elem_to_table(table* T,table_elem* T_elem){
     T->curr_len++;
 }
 
-bool fill_table(table* T, int fd){
+int fill_table(table* T, int fd){
     char *buffer = malloc(sizeof (char)*BUF_SIZE);
     int offset = 0;
     if(lseek(fd,offset,TO_THE_START) == -1L){
         perror("Seek error");
-        return false;
+        return 0;
     }
-    if(read(fd, buffer, BUF_SIZE) == 0){
+    int read_check = read(fd, buffer, BUF_SIZE);
+    if(read_check == 0){
         printf("empty file\n");
-        return false;
+        return 0;
+    }else if(read_check == -1){
+        perror("read_error");
+        return READ_ERROR;
     }
     char printing_symbol;
     int tmp_offset = 0;
@@ -97,16 +102,20 @@ bool fill_table(table* T, int fd){
             offset += strlen(buffer);
             if(lseek(fd,offset,TO_THE_START) == -1L){
                 perror("Seek error");
-                return false;
+                return 0;
             }
 
-            if(read(fd, buffer, BUF_SIZE) == 0){
+            read_check = read(fd, buffer, BUF_SIZE);
+            if(read_check == 0){
                 break;
+            }else if(read_check == -1){
+                perror("read_error");
+                return READ_ERROR;
             }
             i = 0;
         }
     }
-    return true;
+    return 1;
 }
 
 
@@ -189,9 +198,11 @@ int main() {
     }
 
     table* my_table = init_table();
-    bool table_successfully_filled = fill_table(my_table, fd);
-    if(!table_successfully_filled){
+    int table_successfully_filled = fill_table(my_table, fd);
+    if(table_successfully_filled == 0){
         exit(FILL_TABLE_FAIL);
+    }else if(table_successfully_filled == READ_ERROR){
+        exit(READ_ERROR);
     }
 
     bool lines_successfully_printed = print_numbered_line(my_table,fd);
