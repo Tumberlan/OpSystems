@@ -4,8 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #define MAX_SIZE 150
-#define INIT_MEMORY_FAULT 1
-#define ADD_MEMORY_FAULT 2
+#define MEMORY_FAULT 2
 #define PRINT_FAULT 3
 #define EVERYTHING_OK 4
 // создаем структуру list, которая содержит строку и указатель на следующий элемент нашего списка
@@ -151,16 +150,17 @@ char* take_string(bool* is_end, int* l){
 }
 
 //функция заполнения списка, вставляем новые строки, пока маркер is_end не станет false во время функции take_string
-void fill_list(struct list* lst){
+bool fill_list(struct list* lst){
     bool is_end = false;
     while(!is_end){
         int l = 0;
         char* s = take_string(&is_end, &l);
         bool append_checker = append(lst, s,l);
         if(append_checker == false){
-            break;
+            return false;
         }
     }
+    return true;
 
 }
 
@@ -221,7 +221,10 @@ int main() {
     }
     struct list* lst = init_list(str,l);
     if(!checker){
-        fill_list(lst);
+        bool no_errors = fill_list(lst);
+        if(!no_errors){
+            exit(MEMORY_FAULT);
+        }
     }
 
     int print_lst_check = print_list(lst);

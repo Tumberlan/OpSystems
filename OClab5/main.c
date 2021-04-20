@@ -7,9 +7,13 @@
 #include <string.h>
 
 #define BUF_SIZE 15
-#define OPEN_FILE_FAIL 1
-#define FILL_TABLE_FAIL 2
-#define PRINT_LINE_FAIL 3
+#define TO_THE_START 0
+#define TO_THE_CURR 1
+#define TO_THE_END 2
+#define OPEN_FILE_FAIL 3
+#define FILL_TABLE_FAIL 4
+#define PRINT_LINE_FAIL 5
+
 
 typedef struct t_e{
     int offset;
@@ -62,7 +66,7 @@ void add_elem_to_table(table* T,table_elem* T_elem){
 bool fill_table(table* T, int fd){
     char *buffer = malloc(sizeof (char)*BUF_SIZE);
     int offset = 0;
-    if(lseek(fd,offset,0) == -1L){
+    if(lseek(fd,offset,TO_THE_START) == -1L){
         perror("Seek error");
         return false;
     }
@@ -91,7 +95,7 @@ bool fill_table(table* T, int fd){
 
         if(i == strlen(buffer)){
             offset += strlen(buffer);
-            if(lseek(fd,offset,0) == -1L){
+            if(lseek(fd,offset,TO_THE_START) == -1L){
                 perror("Seek error");
                 return false;
             }
@@ -129,7 +133,7 @@ bool print_numbered_line(table* T, int fd){
     }
     while (number != 0) {
         number--;
-        if (lseek(fd, T->array[number].offset, 0) == -1L) {
+        if (lseek(fd, T->array[number].offset, TO_THE_START) == -1L) {
             perror("Seek error");
             return false;
         }
@@ -152,7 +156,7 @@ bool print_numbered_line(table* T, int fd){
 bool print_file(table* T, int fd){
     print_table(T);
     for(int i = 0; i < T->curr_len; i++){
-        if(lseek(fd, T->array[i].offset, 0) == -1L){
+        if(lseek(fd, T->array[i].offset, TO_THE_START) == -1L){
             perror("Seek error");
             return false;
         }
