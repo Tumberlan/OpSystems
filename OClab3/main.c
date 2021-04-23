@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#define FIRST_OPEN_ERROR 0
+#define SECOND_OPEN_ERROR 1
+#define FIRST_CLOSE_F_ERROR 2
+#define SECOND_CLOSE_F_ERROR 3
+#define SETUID_ERROR 4
 
 int main() {
     FILE *file;// инициализируем объект типа файл
@@ -13,16 +18,20 @@ int main() {
     if((file = fopen("test_file.txt", "r"))==NULL){
         perror("File wasn't opened 1"); // помещает значение глобальной переменной errno в строку и записывает эту строку в файл stderr, если ничего в функцию не передаем
         //то сначала выводится строка, а за ней следует двоеточие и сообщение об ошибке, соответствующее значению errno, иначе, выводится наша строка
-        exit(1);
+        exit(FIRST_OPEN_ERROR);
     }else{
-        fclose(file);
+        int close_check = fclose(file);
+        if(close_check != 0){
+            perror("Error in closing file");
+            exit(FIRST_CLOSE_F_ERROR);
+        }
     }
     //открываем файл, если получилось открыть, file будет присвоен указатель файла test_file.txt, если нет доступа, то ничего не будет присвоено, т.е. NULL
     //поэтому при проверке сравниваем именно с NULL
 
     if(setuid(getuid()) == -1){
         perror("user isn't superuser");
-        exit(2);
+        exit(SETUID_ERROR);
     }//устанавливает фактический идентификатор владельца текущего процесса, если фактический пользователь, вызвавший эту функцию является суперпользователем,
     // то также устанавливаются действительный и сохраненный идентификаторы, при успешной работе возвращает 0, при неуспешной -1
 
@@ -31,9 +40,13 @@ int main() {
 
     if((file = fopen("test_file.txt", "r"))==NULL){
         perror("File wasn't opened 2");
-        exit(3);
+        exit(SECOND_OPEN_ERROR);
     }else{
-        fclose(file);
+        int close_check = fclose(file);
+        if(close_check != 0){
+            perror("Error in closing file");
+            exit(SECOND_CLOSE_F_ERROR);
+        }
     }
 
 
