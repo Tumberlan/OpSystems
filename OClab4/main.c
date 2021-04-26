@@ -7,6 +7,7 @@
 #define MEMORY_FAULT 2
 #define PRINT_FAULT 3
 #define EVERYTHING_OK 4
+#define STRING_HASNT_ENDED true
 // создаем структуру list, которая содержит строку и указатель на следующий элемент нашего списка
 
 struct list{
@@ -82,7 +83,7 @@ char* take_string(bool* is_end, int* l){
     char end_input_symbol = '.';
     char end_symbol = '\n';
     int size = 0;
-    while(true) {
+    while(STRING_HASNT_ENDED) {
         char new_str[MAX_SIZE];
         fgets_checker =  fgets(new_str, MAX_SIZE, stdin);
         if(fgets_checker == NULL){
