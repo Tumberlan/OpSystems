@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #define MAX_SIZE 150
+#define NO_MISTAKES_WHILE_FERROR 0
 #define MEMORY_FAULT 2
 #define PRINT_FAULT 3
 #define EVERYTHING_OK 4
@@ -88,7 +89,7 @@ char* take_string(bool* is_end, int* l){
         fgets_checker =  fgets(new_str, MAX_SIZE, stdin);
         if(fgets_checker == NULL){
             int file_checker = ferror(stdin);
-            if(file_checker != 0){
+            if(file_checker != NO_MISTAKES_WHILE_FERROR){
                 perror("errors in stdin");
                 return NULL;
             }
