@@ -1,4 +1,3 @@
-
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -7,6 +6,7 @@
 #include <string.h>
 
 #define BUF_SIZE 15
+#define END_OF_FILE 0
 #define TO_THE_START 0
 #define TO_THE_CURR 1
 #define TO_THE_END 2
@@ -15,6 +15,13 @@
 #define PRINT_LINE_FAIL 5
 #define READ_ERROR 6
 #define CLOSE_FILE_FAIL 7
+#define ERROR_IN_INPUT_FILE 8
+#define NO_ERRORS 9
+#define LSEEK_ERROR -1L
+#define FILE_OPEN_READ_CLOSE_ERROR -1
+#define ADD_TO_TABLE_ERROR 10
+#define NO_MEMORY 11
+#define NEW_LINE_SYMB '\n'
 
 
 typedef struct t_e{
@@ -24,6 +31,10 @@ typedef struct t_e{
 
 table_elem* make_table_elem(int os, int l){
     table_elem* new = malloc(sizeof (table_elem));
+    if(new == NULL){
+        perror("no memory for new table element");
+        return NULL;
+    }
     new->offset = os;
     new->len = l;
     return new;
@@ -37,8 +48,15 @@ typedef struct t{
 
 table* init_table(){
     table* T = malloc(sizeof(table));
-
+    if(T == NULL){
+        perror("no memory for new table");
+        return NULL;
+    }
     table_elem* tmp = malloc(sizeof (table_elem));
+    if(tmp == NULL){
+        perror("no memory for new table element");
+        return NULL;
+    }
     T->array = tmp;
     T->arr_len = 1;
     T->curr_len = 0;
@@ -51,10 +69,17 @@ void free_table(table* T){
     }
     free(T);
 }
-void add_elem_to_table(table* T,table_elem* T_elem){
+bool add_elem_to_table(table* T,table_elem* T_elem){
+    if(T_elem == NULL){
+        return false;
+    }
     if(T->curr_len+1 > T->arr_len){
         T->arr_len = T->arr_len*2;
         table_elem* tmp = malloc(sizeof (table_elem)*T->arr_len);
+        if(tmp == NULL){
+            perror("no memory for new table element");
+            return false;
+        }
         for(int i = 0; i < T->curr_len; i++){
             tmp[i] = T->array[i];
         }
@@ -63,20 +88,22 @@ void add_elem_to_table(table* T,table_elem* T_elem){
     }
     T->array[T->curr_len] = *T_elem;
     T->curr_len++;
+    return true;
 }
 
 int fill_table(table* T, int fd){
-    char *buffer = malloc(sizeof (char)*BUF_SIZE);
+    char buffer[BUF_SIZE+1];
     int offset = 0;
-    if(lseek(fd,offset,TO_THE_START) == -1L){
+    long lseek_check = lseek(fd,offset,TO_THE_START);
+    if(lseek_check == LSEEK_ERROR){
         perror("Seek error");
-        return 0;
+        return ERROR_IN_INPUT_FILE;
     }
     int read_check = read(fd, buffer, BUF_SIZE);
-    if(read_check == 0){
+    if(read_check == END_OF_FILE){
         printf("empty file\n");
-        return 0;
-    }else if(read_check == -1){
+        return ERROR_IN_INPUT_FILE;
+    }else if(read_check == FILE_OPEN_READ_CLOSE_ERROR){
         perror("read_error");
         return READ_ERROR;
     }
@@ -87,11 +114,17 @@ int fill_table(table* T, int fd){
     while(i < strlen(buffer)){
         printing_symbol = buffer[i];
         if(printing_symbol == EOF){
-            add_elem_to_table(T, make_table_elem(tmp_offset,tmp_len));
+            bool add_check = add_elem_to_table(T, make_table_elem(tmp_offset,tmp_len));
+            if(add_check == false){
+                return ADD_TO_TABLE_ERROR;
+            }
             break;
         }
-        if(printing_symbol == '\n'){
-            add_elem_to_table(T, make_table_elem(tmp_offset,tmp_len));
+        if(printing_symbol == NEW_LINE_SYMB){
+            bool add_check =  add_elem_to_table(T, make_table_elem(tmp_offset,tmp_len));
+            if(add_check == false){
+                return ADD_TO_TABLE_ERROR;
+            }
             tmp_offset += tmp_len+1;
             tmp_len = 0;
         }else{
@@ -101,22 +134,23 @@ int fill_table(table* T, int fd){
 
         if(i == strlen(buffer)){
             offset += strlen(buffer);
-            if(lseek(fd,offset,TO_THE_START) == -1L){
+            lseek_check = lseek(fd,offset,TO_THE_START);
+            if(lseek_check == LSEEK_ERROR){
                 perror("Seek error");
-                return 0;
+                return ERROR_IN_INPUT_FILE;
             }
 
             read_check = read(fd, buffer, BUF_SIZE);
-            if(read_check == 0){
+            if(read_check == END_OF_FILE){
                 break;
-            }else if(read_check == -1){
+            }else if(read_check == FILE_OPEN_READ_CLOSE_ERROR){
                 perror("read_error");
                 return READ_ERROR;
             }
             i = 0;
         }
     }
-    return 1;
+    return NO_ERRORS;
 }
 
 
@@ -126,59 +160,72 @@ void print_table(table* T){
     }
 }
 
-bool print_numbered_line(table* T, int fd){
+int print_numbered_line(table* T, int fd){
     int number;
-    int scanf_checker = scanf("%d", &number);
-    while(scanf_checker != 1){
-        printf("wrong number of arguments\n");
-        scanf_checker = scanf("%d", number);
-    }
-    while(number > T->curr_len || number < 0){
-        printf("unavailable line number, please enter another number\n");
-        scanf_checker = scanf("%d", number);
-        while(scanf_checker != 1){
+    int scanf_checker;
+    long lseek_checker;
+    int read_check;
+    do{
+        scanf_checker = scanf("%d", &number);
+        if(scanf_checker != 1){
             printf("wrong number of arguments\n");
-            scanf_checker = scanf("%d", number);
+            number = -1;
+        }else if(number > T->curr_len || number < 0){
+            printf("unavailable line number, please enter another number\n");
         }
-    }
+    } while (number > T->curr_len || number < 0);
     while (number != 0) {
         number--;
-        if (lseek(fd, T->array[number].offset, TO_THE_START) == -1L) {
+        lseek_checker = lseek(fd, T->array[number].offset, TO_THE_START);
+        if (lseek_checker == LSEEK_ERROR) {
             perror("Seek error");
-            return false;
+            return LSEEK_ERROR;
         }
-        char *buf = malloc(sizeof(char) * T->array[number].len);
-        read(fd, buf, T->array[number].len);
+        char buf[T->array[number].len];
+        read_check = read(fd, buf, T->array[number].len);
+        if(read_check == FILE_OPEN_READ_CLOSE_ERROR){
+            perror("read_error");
+            return READ_ERROR;
+        }
         for (int j = 0; j < T->array[number].len; j++) {
             printf("%c", buf[j]);
         }
         printf("\n");
-        free(buf);
-        scanf("%d", &number);
-        while(number > T->curr_len || number < 0){
-            printf("unavailable line number, please enter another number\n");
-            scanf("%d", &number);
-        }
+        do{
+            scanf_checker = scanf("%d", &number);
+            if(scanf_checker != 1){
+                printf("wrong number of arguments\n");
+                number = -1;
+            }else if(number > T->curr_len || number < 0){
+                printf("unavailable line number, please enter another number\n");
+            }
+        } while (number > T->curr_len || number < 0);
     }
-    return true;
+    return NO_ERRORS;
 }
 
-bool print_file(table* T, int fd){
+int print_file(table* T, int fd){
     print_table(T);
+    int read_check;
+    long lseek_check;
     for(int i = 0; i < T->curr_len; i++){
-        if(lseek(fd, T->array[i].offset, TO_THE_START) == -1L){
+        lseek_check = lseek(fd, T->array[i].offset, TO_THE_START);
+        if(lseek_check == LSEEK_ERROR){
             perror("Seek error");
-            return false;
+            return LSEEK_ERROR;
         }
-        char *buf = malloc(sizeof (char)*T->array[i].len);
-        read(fd, buf, T->array[i].len);
+        char buf[T->array[i].len];
+        read_check = read(fd, buf, T->array[i].len);
+        if(read_check == FILE_OPEN_READ_CLOSE_ERROR){
+            perror("read_error");
+            return READ_ERROR;
+        }
         for(int j = 0; j < T->array[i].len;j++){
             printf("%c",buf[j]);
         }
         printf("\n");
-        free(buf);
     }
-    return true;
+    return NO_ERRORS;
 }
 
 
@@ -193,27 +240,28 @@ int main() {
 
     int fd;
     int fd_checker = (fd = open(filename,O_RDONLY));
-    if(fd_checker == -1){
+    if(fd_checker == FILE_OPEN_READ_CLOSE_ERROR){
         perror("can't open file");
         exit(OPEN_FILE_FAIL);
     }
 
     table* my_table = init_table();
-    int table_successfully_filled = fill_table(my_table, fd);
-    if(table_successfully_filled == 0){
-        exit(FILL_TABLE_FAIL);
-    }else if(table_successfully_filled == READ_ERROR){
-        exit(READ_ERROR);
+    if(my_table == NULL){
+        exit(NO_MEMORY);
+    }
+    int table_error = fill_table(my_table, fd);
+    if(table_error != NO_ERRORS){
+        exit(table_error);
     }
 
-    bool lines_successfully_printed = print_numbered_line(my_table,fd);
-    if(!lines_successfully_printed){
-        exit(PRINT_LINE_FAIL);
+    int lines_print_error = print_numbered_line(my_table,fd);
+    if(lines_print_error != NO_ERRORS){
+        exit(lines_print_error);
     }
 
     free_table(my_table);
     int close_f_check = close(fd);
-    if(close_f_check == -1){
+    if(close_f_check == FILE_OPEN_READ_CLOSE_ERROR){
         exit(CLOSE_FILE_FAIL);
     }
     return 0;

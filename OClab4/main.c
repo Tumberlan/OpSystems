@@ -75,37 +75,13 @@ bool append(struct list* L, char* str, int l){
 // функция взятия строки, создаем новую строку с помощью malloc, с помощью fgets берем строку, проверяем её на то
 // является ли она последней, если да, то меняем значение переменной is_end на true, чтобы в другой функции
 // сообщить о том, что нужно закончить процесс ввода строк, возвращаем полученную строку
-char* take_str(bool* is_end, int* l){
+char* take_string(bool* is_end, int* l){
 
-
-    char* str = (char*)malloc(sizeof (char) * MAX_SIZE);
-    if(str == NULL){
-        perror("no memory for new str");
-        return NULL;
-    }
-    char end_symbol = '\n';
-
-    char* fgets_checker = fgets(str, MAX_SIZE, stdin);
-    if(fgets_checker == NULL){
-        int file_checker = ferror(stdin);// ferror проверяет, имеются ли файловые ошибки в заданном потоке(stdin), возврат 0 означает отсутствие ошибок, а ненулевая величина указывает на наличие ошибки
-        if(file_checker != 0){
-            perror("errors in stdin");
-            return NULL;
-        }
-    }
-
-    int local_size = strlen(str);
-    *l = local_size;
+    char* str = NULL;
+    char* fgets_checker;
     char end_input_symbol = '.';
-    if(str[0] == end_input_symbol){
-        *is_end = true;
-    }
-
-
-    if(str[local_size-1] == end_symbol){
-        return str;
-    }
-    int size = MAX_SIZE;
+    char end_symbol = '\n';
+    int size = 0;
     while(true) {
         char new_str[MAX_SIZE];
         fgets_checker =  fgets(new_str, MAX_SIZE, stdin);
@@ -130,6 +106,9 @@ char* take_str(bool* is_end, int* l){
 
         size += new_len;
         *l = size;
+        if(str[0] == end_input_symbol){
+            *is_end = true;
+        }
         if(new_len < MAX_SIZE-1 || new_str[new_len-1] == end_symbol){
             break;
         }
@@ -152,7 +131,7 @@ bool fill_list(struct list* lst){
     bool is_end = false;
     while(!is_end){
         int l = 0;
-        char* s = take_str(&is_end, &l);
+        char* s = take_string(&is_end, &l);
         bool append_checker = append(lst, s,l);
         if(append_checker == false){
             return false;
@@ -176,7 +155,6 @@ int print_list(struct list* lst){
     print_check = printf("Here is your list: \n");
     if (print_check < 0) {
         perror("can't print");
-        list_free(new);
         return (PRINT_FAULT);
     }
     while (new->next != NULL) {
@@ -185,7 +163,6 @@ int print_list(struct list* lst){
         while(i < new->len) {
             print_check = printf("%c", new->str[i]);
             if (print_check < 0) {
-                list_free(new);
                 perror("can't print");
                 return (PRINT_FAULT);
             }
@@ -198,7 +175,6 @@ int print_list(struct list* lst){
         print_check = printf("%c", new->str[i]);
         if (print_check < 0) {
             perror("can't print");
-            list_free(new);
             return (PRINT_FAULT);
         }
         i++;
@@ -211,11 +187,11 @@ int print_list(struct list* lst){
 int main() {
     bool checker = false;
     int l = 0;
-    char* str = take_str(&checker, &l);
+    char* str = take_string(&checker, &l);
     while(str == NULL){
         printf("try again");
         perror("mistakes in input");
-        str = take_str(&checker, &l);
+        str = take_string(&checker, &l);
     }
     struct list* lst = init_list(str,l);
     if(!checker){
