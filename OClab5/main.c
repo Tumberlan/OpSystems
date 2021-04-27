@@ -167,8 +167,9 @@ int print_numbered_line(table* T, int fd){
     int read_check;
     do{
         scanf_checker = scanf("%d", &number);
+        fflush(stdin);
         if(scanf_checker != 1){
-            printf("wrong number of arguments\n");
+            printf("wrong argument\n");
             number = -1;
         }else if(number > T->curr_len || number < 0){
             printf("unavailable line number, please enter another number\n");
@@ -193,8 +194,9 @@ int print_numbered_line(table* T, int fd){
         printf("\n");
         do{
             scanf_checker = scanf("%d", &number);
+            fflush(stdin);
             if(scanf_checker != 1){
-                printf("wrong number of arguments\n");
+                printf("wrong argument\n");
                 number = -1;
             }else if(number > T->curr_len || number < 0){
                 printf("unavailable line number, please enter another number\n");
@@ -232,12 +234,13 @@ int print_file(table* T, int fd){
 int main() {
 
     char filename[BUF_SIZE];
-    int scanf_checker = scanf("%s", filename);
-    while(scanf_checker != 1){
-        printf("wrong number of arguments\n");
+    int scanf_checker;
+    do{
         scanf_checker = scanf("%s", filename);
-    }
-
+        if(scanf_checker != 1){
+            printf("wrong argument\n");
+        }
+    }while(scanf_checker != 1);
     int fd;
     int fd_checker = (fd = open(filename,O_RDONLY));
     if(fd_checker == FILE_OPEN_READ_CLOSE_ERROR){
