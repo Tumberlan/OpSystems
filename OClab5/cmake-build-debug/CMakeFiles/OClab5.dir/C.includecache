@@ -7,14 +7,16 @@
 #IncludeRegexTransform: 
 
 C:/Users/Igor/ProgProjects/OpSystems/OClab5/main.c
-dos.h
+fcntl.h
 -
-io.h
--
-sys/stat.h
+unistd.h
 -
 stdlib.h
 -
 stdio.h
+-
+stdbool.h
+-
+string.h
 -
 
