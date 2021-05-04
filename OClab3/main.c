@@ -45,13 +45,13 @@ int main() {
     if(file == NULL){
         perror("File wasn't opened 2");
         exit(SECOND_OPEN_ERROR);
-    }else{
-        int close_check = fclose(file);
-        if(close_check != SUCCESS_IN_FILE_CLOSING){
-            perror("Error in closing file");
-            exit(SECOND_CLOSE_F_ERROR);
-        }
     }
+    int close_check = fclose(file);
+    if(close_check != SUCCESS_IN_FILE_CLOSING){
+        perror("Error in closing file");
+        exit(SECOND_CLOSE_F_ERROR);
+    }
+    
 
 
     return 0;
