@@ -51,7 +51,7 @@ int main() {
         perror("Error in closing file");
         exit(SECOND_CLOSE_F_ERROR);
     }
-    
+
 
 
     return 0;

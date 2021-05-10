@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <poll.h>
 
 #define TO_THE_START 0
 #define TO_THE_CURR 1
@@ -13,7 +14,6 @@
 #define PRINT_LINE_FAIL 5
 #define READ_ERROR 6
 #define CLOSE_FILE_FAIL 7
-#define ERROR_IN_INPUT_FILE 8
 #define NO_ERRORS 9
 #define LSEEK_ERROR -1L
 #define FILE_OPEN_READ_CLOSE_ERROR -1
@@ -23,6 +23,10 @@
 #define BREAK 12
 #define FGETS_ERR -3
 #define BUF_SIZE 15
+#define POLL_ERROR -1
+#define CONTINUE -2
+#define TIMES_OUT 0
+
 
 typedef struct t_e{
     int offset;
@@ -61,13 +65,6 @@ table* init_table(){
     T->array_length = 1;
     T->current_length = 0;
     return T;
-}
-
-void free_table(table* T){
-    for(int i = 0; i < T->current_length; i++){
-        free(&T->array[i]);
-    }
-    free(T);
 }
 
 bool increase_table_capacity(table* T){
@@ -157,13 +154,6 @@ int fill_table(table* T, int fd){
 }
 
 
-
-void print_table(table* T){
-    for(int i = 0; i < T->current_length; i++){
-        printf("%d offset: %d strlen: %d\n",i+1, T->array[i].offset, T->array[i].length);
-    }
-}
-
 bool check_input(char* str){
     for(int i = 0; i < strlen(str); i++){
         if(!(((int)str[i] >= '0' && (int)str[i] <= '9')|| (int)str[i] == '\n')){
@@ -179,57 +169,29 @@ int get_scanned_number_of_line(table* T){
     char* fgets_check;
 
     do{
-         fgets_check = fgets(input, 10, stdin);
-         if(fgets_check == NULL){
-             perror("cannot open file");
-             return FGETS_ERR;
-         }
-         if((int)input[0] == '\n'){
-             continue;
-         }
-         if(!check_input(input)){
-             perror("wrong arguments, please type 1 not negative number");
-             number_of_line = -1;
-             continue;
-         }
-         number_of_line = atoi(input);
-         if(number_of_line > T->current_length || number_of_line < 0){
-             printf("unavailable line number, please enter another number\n");
-         }
+        fgets_check = fgets(input, 10, stdin);
+        if(fgets_check == NULL){
+            perror("cannot open file");
+            return FGETS_ERR;
+        }
+        if((int)input[0] == '\n'){
+            return CONTINUE;
+        }
+        if(!check_input(input)){
+            perror("wrong arguments, please type 1 not negative number");
+            number_of_line = -1;
+            return CONTINUE;
+        }
+        number_of_line = atoi(input);
+        if(number_of_line > T->current_length || number_of_line < 0){
+            printf("unavailable line number, please enter another number\n");
+            return CONTINUE;
+        }
     }while (number_of_line > T->current_length || number_of_line < 0);
 
     return number_of_line;
 }
 
-
-int print_numbered_line(table* T, int fd){
-    long lseek_checker;
-    int read_check;
-    int number_of_line = get_scanned_number_of_line(T);
-    while (number_of_line != 0) {
-        if(number_of_line == FGETS_ERR){
-            return FGETS_ERR;
-        }
-        number_of_line--;
-        lseek_checker = lseek(fd, T->array[number_of_line].offset, TO_THE_START);
-        if (lseek_checker == LSEEK_ERROR) {
-            perror("Seek error");
-            return LSEEK_ERROR;
-        }
-        char string_buffer[T->array[number_of_line].length];
-        read_check = read(fd, string_buffer, T->array[number_of_line].length);
-        if(read_check == FILE_OPEN_READ_CLOSE_ERROR){
-            perror("read_error");
-            return READ_ERROR;
-        }
-        for (int j = 0; j < T->array[number_of_line].length; j++) {
-            printf("%c", string_buffer[j]);
-        }
-        printf("\n");
-        number_of_line = get_scanned_number_of_line(T);
-    }
-    return NO_ERRORS;
-}
 
 int print_file(table* T, int fd){
     int read_check;
@@ -254,18 +216,54 @@ int print_file(table* T, int fd){
     return NO_ERRORS;
 }
 
+int print_numbered_line(table* T, int fd) {
+    long lseek_checker;
+    int read_check;
+    struct pollfd pfd = {0, POLLIN, 0};
+    int number_of_line = 1;
+    while (number_of_line != 0) {
+        int poll_check = poll(&pfd, 1, 5000);
+        if (poll_check == POLL_ERROR) {
+            perror("lab6.out: poll error");
+            return POLL_ERROR;
+        }
+        if (poll_check == TIMES_OUT) {
+            printf("no input\n");
+            int print_file_res = print_file(T, fd);
+            return print_file_res;
+        }
+        number_of_line = get_scanned_number_of_line(T);
+        if (number_of_line == FGETS_ERR) {
+            return FGETS_ERR;
+        }
+        if(number_of_line == 0 || number_of_line == CONTINUE){
+            continue;
+        }
+        number_of_line--;
+        lseek_checker = lseek(fd, T->array[number_of_line].offset, TO_THE_START);
+        if (lseek_checker == LSEEK_ERROR) {
+            perror("Seek error");
+            return LSEEK_ERROR;
+        }
+        char string_buffer[T->array[number_of_line].length];
+        read_check = read(fd, string_buffer, T->array[number_of_line].length);
+        if (read_check == FILE_OPEN_READ_CLOSE_ERROR) {
+            perror("read_error");
+            return READ_ERROR;
+        }
+        for (int j = 0; j < T->array[number_of_line].length; j++) {
+            printf("%c", string_buffer[j]);
+        }
+        printf("\n");
+        number_of_line++;
+    }
+    return NO_ERRORS;
+
+}
 
 int main() {
-    char filename[BUF_SIZE];
-    int scanf_checker;
-    do{
-        scanf_checker = scanf("%s", filename);
-        if(scanf_checker != 1){
-            printf("wrong argument\n");
-        }
-    }while(scanf_checker != 1);
     int fd;
-    int fd_checker = (fd = open(filename,O_RDONLY));
+    int fd_checker = (fd = open("lab6.c",O_RDONLY));
     if(fd_checker == FILE_OPEN_READ_CLOSE_ERROR){
         perror("can't open file");
         exit(OPEN_FILE_FAIL);
@@ -277,17 +275,17 @@ int main() {
     }
     int table_error = fill_table(T, fd);
     if(table_error != NO_ERRORS){
-        free_table(T);
+        free(T);
         close(fd);
         exit(table_error);
     }
     int lines_print_error = print_numbered_line(T,fd);
     if(lines_print_error != NO_ERRORS){
-        free_table(T);
+        free(T);
         close(fd);
         exit(lines_print_error);
     }
-    free_table(T);
+    free(T);
     int close_f_check = close(fd);
     if(close_f_check == FILE_OPEN_READ_CLOSE_ERROR){
         exit(CLOSE_FILE_FAIL);
