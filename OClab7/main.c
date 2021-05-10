@@ -4,7 +4,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <limits.h>
 #include <poll.h>
+#include <sys/mman.h>
 
 #define TO_THE_START 0
 #define TO_THE_CURR 1
@@ -12,20 +21,19 @@
 #define OPEN_FILE_FAIL 3
 #define FILL_TABLE_FAIL 4
 #define PRINT_LINE_FAIL 5
-#define READ_ERROR 6
 #define CLOSE_FILE_FAIL 7
 #define NO_ERRORS 9
-#define LSEEK_ERROR -1L
 #define FILE_OPEN_READ_CLOSE_ERROR -1
 #define ADD_TO_TABLE_ERROR 10
 #define NO_MEMORY 11
 #define NEW_LINE_SYMB '\n'
 #define BREAK 12
 #define FGETS_ERR -3
-#define BUF_SIZE 15
 #define POLL_ERROR -1
 #define CONTINUE -2
 #define TIMES_OUT 0
+#define FSTAT_ERROR -1
+#define MAP_ERROR 13
 #define MAX_WAITING_TIME 5000
 
 
@@ -129,27 +137,21 @@ int push_symbol_to_table(char printing_symbol,table* T,int* offset, int* string_
     return NO_ERRORS;
 }
 
-int fill_table(table* T, int fd){
-    char read_buffer[BUF_SIZE];
-    int read_check;
+int fill_table(table* T, char* fil_map, int fil_size){
+
     char printing_symbol;
     int offset = 0;
     int string_length = 0;
-    while((read_check = read(fd, read_buffer, BUF_SIZE)) > 0){
-        for(int i = 0; i < read_check;i++){
-            printing_symbol = read_buffer[i];
-            int push_result = push_symbol_to_table(printing_symbol, T,&offset,&string_length);
-            if (push_result == BREAK){
-                break;
-            }
-            if(push_result != NO_ERRORS){
-                return push_result;
-            }
+
+    for(int i = 0; i < fil_size; i++) {
+        printing_symbol = fil_map[i];
+        int push_result = push_symbol_to_table(printing_symbol, T, &offset, &string_length);
+        if (push_result == BREAK) {
+            break;
         }
-    }
-    if (read_check == FILE_OPEN_READ_CLOSE_ERROR) {
-        perror("read_error");
-        return READ_ERROR;
+        if (push_result != NO_ERRORS) {
+            return push_result;
+        }
     }
     return NO_ERRORS;
 }
@@ -193,31 +195,7 @@ int get_scanned_number_of_line(table* T){
     return number_of_line;
 }
 
-
-int print_file(table* T, int fd){
-    int read_check;
-    long lseek_check;
-    for(int i = 0; i < T->current_length; i++){
-        lseek_check = lseek(fd, T->array[i].offset, TO_THE_START);
-        if(lseek_check == LSEEK_ERROR){
-            perror("Seek error");
-            return LSEEK_ERROR;
-        }
-        char string_buffer[T->array[i].length];
-        read_check = read(fd, string_buffer, T->array[i].length);
-        if(read_check == FILE_OPEN_READ_CLOSE_ERROR){
-            perror("read_error");
-            return READ_ERROR;
-        }
-        for(int j = 0; j < T->array[i].length;j++){
-            printf("%c",string_buffer[j]);
-        }
-        printf("\n");
-    }
-    return NO_ERRORS;
-}
-
-int print_numbered_line(table* T, int fd) {
+int print_numbered_line(table* T, char* fil_map) {
     long lseek_checker;
     int read_check;
     struct pollfd pfd = {0, POLLIN, 0};
@@ -229,9 +207,8 @@ int print_numbered_line(table* T, int fd) {
             return POLL_ERROR;
         }
         if (poll_check == TIMES_OUT) {
-            printf("no input\n");
-            int print_file_res = print_file(T, fd);
-            return print_file_res;
+            printf("no input\n%s\n", fil_map);
+            return NO_ERRORS;
         }
         number_of_line = get_scanned_number_of_line(T);
         if (number_of_line == FGETS_ERR) {
@@ -241,17 +218,9 @@ int print_numbered_line(table* T, int fd) {
             continue;
         }
         number_of_line--;
-        lseek_checker = lseek(fd, T->array[number_of_line].offset, TO_THE_START);
-        if (lseek_checker == LSEEK_ERROR) {
-            perror("Seek error");
-            return LSEEK_ERROR;
-        }
+
         char string_buffer[T->array[number_of_line].length];
-        read_check = read(fd, string_buffer, T->array[number_of_line].length);
-        if (read_check == FILE_OPEN_READ_CLOSE_ERROR) {
-            perror("read_error");
-            return READ_ERROR;
-        }
+        memcpy(string_buffer, fil_map+T->array[number_of_line].offset, T->array[number_of_line].length);
         for (int j = 0; j < T->array[number_of_line].length; j++) {
             printf("%c", string_buffer[j]);
         }
@@ -264,23 +233,42 @@ int print_numbered_line(table* T, int fd) {
 
 int main() {
     int fd;
-    int fd_checker = (fd = open("lab6.c",O_RDONLY));
+    int fd_checker = (fd = open("lab7.c",O_RDONLY));
     if(fd_checker == FILE_OPEN_READ_CLOSE_ERROR){
         perror("can't open file");
         exit(OPEN_FILE_FAIL);
     }
+    struct stat fil_stat;
+    int fil_size;
+    int line_number;
+    int fstat_res = fstat(fd, &fil_stat);
+    if(fstat_res == FSTAT_ERROR){
+        perror("can't get file statistic");
+        close(fd);
+        exit(FSTAT_ERROR);
+    }
+    fil_size = fil_stat.st_size;
+    char* fil_map = (char*)mmap(0, fil_size, PROT_READ, MAP_SHARED, fd, 0);
+    if(fil_map == MAP_FAILED){
+        perror("failed mapping file");
+        close(fd);
+        exit(MAP_ERROR);
+    }
+
     table* T = init_table();
     if(T == NULL){
         close(fd);
         exit(NO_MEMORY);
     }
-    int table_error = fill_table(T, fd);
+
+    int table_error = fill_table(T,fil_map, fil_size);
     if(table_error != NO_ERRORS){
         free(T);
         close(fd);
         exit(table_error);
     }
-    int lines_print_error = print_numbered_line(T,fd);
+
+    int lines_print_error = print_numbered_line(T,fil_map);
     if(lines_print_error != NO_ERRORS){
         free(T);
         close(fd);
