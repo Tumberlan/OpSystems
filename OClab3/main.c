@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#define SUCCESS_IN_FILE_CLOSING 0
 #define FIRST_OPEN_ERROR 0
 #define SECOND_OPEN_ERROR 1
 #define FIRST_CLOSE_F_ERROR 2
@@ -40,8 +39,9 @@ int main() {
     FILE *file = NULL;// инициализируем объект типа файл
     long int uid = getuid();
     long int euid = geteuid();
-    printf("Effective user id: %ld\n",uid);//вывод эффективного идентификатора пользователя
-    printf("Real user id: %ld\n",euid);//вывод реального идентефикатора пользователя
+
+    printf("Effective user id: %ld\n",euid);//вывод реального идентефикатора пользователя
+    printf("Real user id: %ld\n",uid);//вывод эффективного идентификатора пользователя
     //фактический ID соответствует ID пользователя, который вызвал процесс, эффективный ID соответствует установленному setuid биту на исполняемом файле
     int open_close_file_check = open_close_file_f(file,1);
     if(open_close_file_check != NO_EXCEPTIONS){
@@ -55,8 +55,8 @@ int main() {
         exit(SETUID_ERROR);
     }//устанавливает фактический идентификатор владельца текущего процесса, если фактический пользователь, вызвавший эту функцию является суперпользователем,
     // то также устанавливаются действительный и сохраненный идентификаторы, при успешной работе возвращает 0, при неуспешной -1
-    printf("Effective user id: %d\n",geteuid());
     printf("Real user id: %d\n",getuid());
+    printf("Effective user id: %d\n",geteuid());
     open_close_file_check = open_close_file_f(file, 2);
     if(open_close_file_check != NO_EXCEPTIONS){
         exit(open_close_file_check);
