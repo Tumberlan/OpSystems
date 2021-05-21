@@ -35,7 +35,7 @@
 #define FSTAT_ERROR -1
 #define MAP_ERROR 13
 #define MAX_WAITING_TIME 5000
-#define READ_ARRAY_LENGTH 10
+#define INPUT_NUMBER_ARRAY_LENGTH 10
 
 
 typedef struct t_e{
@@ -168,7 +168,7 @@ bool check_input(char* str){
 }
 
 void check(char* input, bool* skip, bool* skip_continue, bool* next_iter){
-    if(strlen(input) >= READ_ARRAY_LENGTH-1 ){
+    if(strlen(input) >= INPUT_NUMBER_ARRAY_LENGTH-1 ){
         *skip = true;
         *skip_continue = true;
         *next_iter = true;
@@ -177,15 +177,15 @@ void check(char* input, bool* skip, bool* skip_continue, bool* next_iter){
 
 int get_scanned_number_of_line(table* T){
     int number_of_line;
-    char input[READ_ARRAY_LENGTH];
+    char input[INPUT_NUMBER_ARRAY_LENGTH];
     char* fgets_check;
     bool skip = false;
     bool skip_continue;
     bool next_iter = false;
     do{
         next_iter = false;
-        fgets_check = fgets(input, READ_ARRAY_LENGTH+1, stdin);
-        if(strlen(input) < READ_ARRAY_LENGTH-1){
+        fgets_check = fgets(input, INPUT_NUMBER_ARRAY_LENGTH+1, stdin);
+        if(strlen(input) < INPUT_NUMBER_ARRAY_LENGTH-1){
             skip_continue = false;
         }
         if(skip){

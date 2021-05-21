@@ -12,8 +12,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="0819451a-fcbc-4bf4-b261-cd44bdfd278c" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/../OClab5/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/../OClab5/main.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -50,7 +50,7 @@
     <property name="cf.first.check.clang-format" value="false" />
     <property name="cidr.known.project.marker" value="true" />
     <property name="cmake.loaded.for.project" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../OClab5" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../OClab7" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
@@ -74,6 +74,7 @@
       <workItem from="1620646935282" duration="8483000" />
       <workItem from="1620660231421" duration="2243000" />
       <workItem from="1620737138525" duration="199000" />
+      <workItem from="1621564454788" duration="929000" />
     </task>
     <servers />
   </component>
