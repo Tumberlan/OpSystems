@@ -185,7 +185,7 @@ int get_scanned_number_of_line(table* T){
     do{
         next_iter = false;
         fgets_check = fgets(input, INPUT_NUMBER_ARRAY_LENGTH+1, stdin);
-        if(strlen(input) < INPUT_NUMBER_ARRAY_LENGTH-1){
+        if(strlen(input) < INPUT_NUMBER_ARRAY_LENGTH){
             skip_continue = false;
         }
         if(skip){
