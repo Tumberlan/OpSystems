@@ -27,7 +27,7 @@
 #define CONTINUE -2
 #define TIMES_OUT 0
 #define MAX_WAITING_TIME 5000
-
+#define READ_ARRAY_LENGTH 10
 
 typedef struct t_e{
     int offset;
@@ -164,32 +164,51 @@ bool check_input(char* str){
     return true;
 }
 
+void check(char* input, bool* skip, bool* skip_continue, bool* next_iter){
+    if(strlen(input) >= READ_ARRAY_LENGTH-1 ){
+        *skip = true;
+        *skip_continue = true;
+        *next_iter = true;
+    }
+}
+
 int get_scanned_number_of_line(table* T){
     int number_of_line;
-    char input[10];
+    char input[READ_ARRAY_LENGTH];
     char* fgets_check;
-
+    bool skip = false;
+    bool skip_continue;
+    bool next_iter = false;
     do{
-        fgets_check = fgets(input, 10, stdin);
+        next_iter = false;
+        fgets_check = fgets(input, READ_ARRAY_LENGTH+1, stdin);
+        if(strlen(input) < READ_ARRAY_LENGTH-1){
+            skip_continue = false;
+        }
+        if(skip){
+            skip = skip_continue;
+            next_iter = true;
+            continue;
+        }
         if(fgets_check == NULL){
             perror("cannot open file");
             return FGETS_ERR;
         }
         if((int)input[0] == '\n'){
-            return CONTINUE;
+            continue;
         }
         if(!check_input(input)){
             perror("wrong arguments, please type 1 not negative number");
-            number_of_line = -1;
-            return CONTINUE;
+            check(input, &skip, &skip_continue, &next_iter);
+            next_iter = true;
+            continue;
         }
         number_of_line = atoi(input);
         if(number_of_line > T->current_length || number_of_line < 0){
             printf("unavailable line number, please enter another number\n");
-            return CONTINUE;
         }
-    }while (number_of_line > T->current_length || number_of_line < 0);
-
+        check(input, &skip, &skip_continue, &next_iter);
+    }while (number_of_line > T->current_length || number_of_line < 0 || next_iter);
     return number_of_line;
 }
 
