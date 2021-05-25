@@ -215,7 +215,7 @@ int get_scanned_number_of_line(table* T){
         }
         number_of_line = atoi(input);
         if(number_of_line > T->current_length || number_of_line < 0){
-            printf("unavailable line number, please enter another number\n");
+            perror("unavailable line number, please enter another number");
         }
         check(input, &skip, &skip_continue, &next_iter);
     }while (number_of_line > T->current_length || number_of_line < 0 || next_iter);

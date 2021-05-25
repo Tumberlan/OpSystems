@@ -55,8 +55,8 @@ int main() {
         exit(SETUID_ERROR);
     }//устанавливает фактический идентификатор владельца текущего процесса, если фактический пользователь, вызвавший эту функцию является суперпользователем,
     // то также устанавливаются действительный и сохраненный идентификаторы, при успешной работе возвращает 0, при неуспешной -1
-    printf("Real user id: %d\n",getuid());
     printf("Effective user id: %d\n",geteuid());
+    printf("Real user id: %d\n",getuid());
     open_close_file_check = open_close_file_f(file, 2);
     if(open_close_file_check != NO_EXCEPTIONS){
         exit(open_close_file_check);

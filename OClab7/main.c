@@ -34,6 +34,7 @@
 #define TIMES_OUT 0
 #define FSTAT_ERROR -1
 #define MAP_ERROR 13
+#define BUF_SIZE 15
 #define MAX_WAITING_TIME 5000
 #define INPUT_NUMBER_ARRAY_LENGTH 10
 
@@ -208,7 +209,7 @@ int get_scanned_number_of_line(table* T){
         }
         number_of_line = atoi(input);
         if(number_of_line > T->current_length || number_of_line < 0){
-            printf("unavailable line number, please enter another number\n");
+            perror("unavailable line number, please enter another number");
         }
         check(input, &skip, &skip_continue, &next_iter);
     }while (number_of_line > T->current_length || number_of_line < 0 || next_iter);
@@ -224,11 +225,11 @@ int print_numbered_line(table* T, char* fil_map) {
     while (number_of_line != 0) {
         int poll_check = poll(&pfd, 1, MAX_WAITING_TIME);
         if (poll_check == POLL_ERROR) {
-            perror("lab6.out: poll error");
+            perror("poll error");
             return POLL_ERROR;
         }
         if (poll_check == TIMES_OUT) {
-            printf("no input\n%s\n", fil_map);
+            printf(" no input\n%s\n", fil_map);
             return NO_ERRORS;
         }
         number_of_line = get_scanned_number_of_line(T);
@@ -253,8 +254,16 @@ int print_numbered_line(table* T, char* fil_map) {
 }
 
 int main() {
+    char filename[BUF_SIZE];
+    int scanf_checker;
+    do{
+        scanf_checker = scanf("%s", filename);
+        if(scanf_checker != 1){
+            printf("wrong argument\n");
+        }
+    }while(scanf_checker != 1);
     int fd;
-    int fd_checker = (fd = open("lab7.c",O_RDONLY));
+    int fd_checker = (fd = open(filename,O_RDONLY));
     if(fd_checker == FILE_OPEN_READ_CLOSE_ERROR){
         perror("can't open file");
         exit(OPEN_FILE_FAIL);
