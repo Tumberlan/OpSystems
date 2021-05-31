@@ -26,6 +26,7 @@
 #define POLL_ERROR -1
 #define CONTINUE -2
 #define TIMES_OUT 0
+#define NO_READING 0
 #define MAX_WAITING_TIME 5000
 #define INPUT_NUMBER_ARRAY_LENGTH 10
 
@@ -242,6 +243,10 @@ int print_numbered_line(table* T, int fd) {
     struct pollfd pfd = {0, POLLIN, 0};
     int number_of_line = 1;
     while (number_of_line != 0) {
+        if(pfd.events == NO_READING){
+            perror("can't read");
+            return POLL_ERROR;
+        }
         int poll_check = poll(&pfd, 1, MAX_WAITING_TIME);
         if (poll_check == POLL_ERROR) {
             perror("poll error");
@@ -276,6 +281,10 @@ int print_numbered_line(table* T, int fd) {
         }
         printf("\n");
         number_of_line++;
+        if(pfd.revents){
+            continue;
+        }
+        pfd.events = NO_READING;
     }
     return NO_ERRORS;
 

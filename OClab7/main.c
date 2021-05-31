@@ -33,8 +33,10 @@
 #define CONTINUE -2
 #define TIMES_OUT 0
 #define FSTAT_ERROR -1
+#define MUNMAP_ERROR -1
 #define MAP_ERROR 13
 #define BUF_SIZE 15
+#define NO_READING 0
 #define MAX_WAITING_TIME 5000
 #define INPUT_NUMBER_ARRAY_LENGTH 10
 
@@ -95,28 +97,28 @@ bool increase_table_capacity(table* T){
 
 
 
-bool add_elem_to_table(table* T,table_elem* T_elem){
+bool add_elem_to_table(table* my_table,table_elem* T_elem){
     if(T_elem == NULL){
         return false;
     }
     bool no_mistakes_check = true;
-    if(T->current_length+1 > T->array_length){
-        no_mistakes_check = increase_table_capacity(T);
+    if(my_table->current_length+1 > my_table->array_length){
+        no_mistakes_check = increase_table_capacity(my_table);
     }
     if(!no_mistakes_check){
         return false;
     }
-    T->array[T->current_length] = *T_elem;
-    T->current_length++;
+    my_table->array[my_table->current_length] = *T_elem;
+    my_table->current_length++;
     return true;
 }
 
 
 
-int push_symbol_to_table(char printing_symbol,table* T,int* offset, int* string_length){
+int push_symbol_to_table(char printing_symbol,table* my_table,int* offset, int* string_length){
     bool add_check = true;
     if(printing_symbol == EOF){
-        add_check = add_elem_to_table(T, make_table_elem(*offset,*string_length));
+        add_check = add_elem_to_table(my_table, make_table_elem(*offset,*string_length));
     }
     if(add_check == false){
         return ADD_TO_TABLE_ERROR;
@@ -125,7 +127,7 @@ int push_symbol_to_table(char printing_symbol,table* T,int* offset, int* string_
         return BREAK;
     }
     if(printing_symbol == NEW_LINE_SYMB){
-        add_check =  add_elem_to_table(T, make_table_elem(*offset,*string_length));
+        add_check =  add_elem_to_table(my_table, make_table_elem(*offset,*string_length));
         *offset += *string_length+1;
 
         *string_length = 0;
@@ -139,14 +141,14 @@ int push_symbol_to_table(char printing_symbol,table* T,int* offset, int* string_
     return NO_ERRORS;
 }
 
-int fill_table(table* T, char* fil_map, int fil_size){
+int fill_table(table* T, char* file_map, int file_size){
 
     char printing_symbol;
     int offset = 0;
     int string_length = 0;
 
-    for(int i = 0; i < fil_size; i++) {
-        printing_symbol = fil_map[i];
+    for(int i = 0; i < file_size; i++) {
+        printing_symbol = file_map[i];
         int push_result = push_symbol_to_table(printing_symbol, T, &offset, &string_length);
         if (push_result == BREAK) {
             break;
@@ -176,7 +178,7 @@ void check(char* input, bool* skip, bool* skip_continue, bool* next_iter){
     }
 }
 
-int get_scanned_number_of_line(table* T){
+int get_scanned_number_of_line(table* my_table){
     int number_of_line;
     char input[INPUT_NUMBER_ARRAY_LENGTH];
     char* fgets_check;
@@ -208,31 +210,34 @@ int get_scanned_number_of_line(table* T){
             continue;
         }
         number_of_line = atoi(input);
-        if(number_of_line > T->current_length || number_of_line < 0){
+        if(number_of_line > my_table->current_length || number_of_line < 0){
             perror("unavailable line number, please enter another number");
         }
         check(input, &skip, &skip_continue, &next_iter);
-    }while (number_of_line > T->current_length || number_of_line < 0 || next_iter);
+    }while (number_of_line > my_table->current_length || number_of_line < 0 || next_iter);
     return number_of_line;
 }
 
 
-int print_numbered_line(table* T, char* fil_map) {
-    long lseek_checker;
+int print_numbered_line(table* my_table, char* file_map) {
     int read_check;
     struct pollfd pfd = {0, POLLIN, 0};
     int number_of_line = 1;
     while (number_of_line != 0) {
+        if(pfd.events == NO_READING){
+            perror("can't read");
+            return POLL_ERROR;
+        }
         int poll_check = poll(&pfd, 1, MAX_WAITING_TIME);
         if (poll_check == POLL_ERROR) {
             perror("poll error");
             return POLL_ERROR;
         }
         if (poll_check == TIMES_OUT) {
-            printf(" no input\n%s\n", fil_map);
+            printf(" no input\n%s\n", file_map);
             return NO_ERRORS;
         }
-        number_of_line = get_scanned_number_of_line(T);
+        number_of_line = get_scanned_number_of_line(my_table);
         if (number_of_line == FGETS_ERR) {
             return FGETS_ERR;
         }
@@ -241,20 +246,44 @@ int print_numbered_line(table* T, char* fil_map) {
         }
         number_of_line--;
 
-        char string_buffer[T->array[number_of_line].length];
-        memcpy(string_buffer, fil_map+T->array[number_of_line].offset, T->array[number_of_line].length);
-        for (int j = 0; j < T->array[number_of_line].length; j++) {
+        char string_buffer[my_table->array[number_of_line].length];
+        memcpy(string_buffer, file_map+my_table->array[number_of_line].offset, my_table->array[number_of_line].length);
+        for (int j = 0; j < my_table->array[number_of_line].length; j++) {
             printf("%c", string_buffer[j]);
         }
         printf("\n");
         number_of_line++;
+        if(pfd.revents){
+            continue;
+        }
+        pfd.events = NO_READING;
     }
     return NO_ERRORS;
-
 }
 
-int main() {
-    char filename[BUF_SIZE];
+
+int close_file_function(int file_des){
+    int close_f_check = close(file_des);
+    if(close_f_check == FILE_OPEN_READ_CLOSE_ERROR) {
+        perror("error in closing file");
+        return CLOSE_FILE_FAIL;
+    }
+    return NO_ERRORS;
+}
+
+int unmapping_function(char* file_map, int file_size, int file_des){
+    int munmap_result = munmap(file_map, file_size);
+    if (munmap_result == MUNMAP_ERROR){
+        perror("munmap error");
+        int close_file_res = close_file_function(file_des);
+        if(close_file_res != NO_ERRORS){
+            return close_file_res;
+        }
+        return (MUNMAP_ERROR);
+    }
+    return NO_ERRORS;
+}
+void take_file_name(char* filename){
     int scanf_checker;
     do{
         scanf_checker = scanf("%s", filename);
@@ -262,52 +291,113 @@ int main() {
             printf("wrong argument\n");
         }
     }while(scanf_checker != 1);
-    int fd;
-    int fd_checker = (fd = open(filename,O_RDONLY));
+
+}
+
+int get_file_stat(int* file_des, struct stat* file_stat){
+    char filename[BUF_SIZE];
+    take_file_name(filename);
+    int fd_checker = (*file_des = open(filename,O_RDONLY));
     if(fd_checker == FILE_OPEN_READ_CLOSE_ERROR){
         perror("can't open file");
-        exit(OPEN_FILE_FAIL);
+        return (OPEN_FILE_FAIL);
     }
-    struct stat fil_stat;
-    int fil_size;
-    int line_number;
-    int fstat_res = fstat(fd, &fil_stat);
+    int fstat_res = fstat(*file_des, file_stat);
     if(fstat_res == FSTAT_ERROR){
         perror("can't get file statistic");
-        close(fd);
-        exit(FSTAT_ERROR);
+        int close_f_check = close_file_function(*file_des);
+        if(close_f_check != NO_ERRORS){
+            return (close_f_check);
+        }
+        return (FSTAT_ERROR);
     }
-    fil_size = fil_stat.st_size;
-    char* fil_map = (char*)mmap(0, fil_size, PROT_READ, MAP_SHARED, fd, 0);
-    if(fil_map == MAP_FAILED){
+    return NO_ERRORS;
+}
+
+int make_table(char* file_map, table* my_table, int file_size, int file_des){
+    int close_f_check;
+
+    int table_error = fill_table(my_table,file_map, file_size);
+    if(table_error != NO_ERRORS){
+        free(my_table);
+        int unmapping_result = unmapping_function(file_map,file_size,file_des);
+        if(unmapping_result != NO_ERRORS){
+            return (unmapping_result);
+        }
+        close_f_check = close_file_function(file_des);
+        if(close_f_check != NO_ERRORS){
+            return (close_f_check);
+        }
+        return (table_error);
+    }
+    return NO_ERRORS;
+}
+
+int printing_lines(table* my_table, char* file_map, int file_des, int file_size){
+    int lines_print_error = print_numbered_line(my_table,file_map);
+    if(lines_print_error != NO_ERRORS){
+        free(my_table);
+        int unmapping_result = unmapping_function(file_map,file_size,file_des);
+        if(unmapping_result != NO_ERRORS){
+            return (unmapping_result);
+        }
+        int close_f_check = close_file_function(file_des);
+        if(close_f_check != NO_ERRORS){
+            return (close_f_check);
+        }
+        return (lines_print_error);
+    }
+}
+
+int main() {
+    int close_f_check;
+    int scanf_checker;
+    int unmapping_result;
+    int file_des;
+    struct stat file_stat;
+    int file_size;
+    int get_file_stat_res = get_file_stat(&file_des, &file_stat);
+    if(get_file_stat_res != NO_ERRORS){
+        exit(NO_ERRORS);
+    }
+    file_size = file_stat.st_size;
+    char* file_map = (char*)mmap(0, file_size, PROT_READ, MAP_SHARED, file_des, 0);
+    if(file_map == MAP_FAILED){
         perror("failed mapping file");
-        close(fd);
+        close_f_check = close_file_function(file_des);
+        if(close_f_check != NO_ERRORS){
+            exit(close_f_check);
+        }
         exit(MAP_ERROR);
     }
-
-    table* T = init_table();
-    if(T == NULL){
-        close(fd);
+    table* my_table = init_table();
+    if(my_table == NULL){
+        unmapping_result = unmapping_function(file_map,file_size,file_des);
+        if(unmapping_result != NO_ERRORS){
+            exit(unmapping_result);
+        }
+        close_f_check = close_file_function(file_des);
+        if(close_f_check != NO_ERRORS){
+            exit(close_f_check);
+        }
         exit(NO_MEMORY);
     }
-
-    int table_error = fill_table(T,fil_map, fil_size);
-    if(table_error != NO_ERRORS){
-        free(T);
-        close(fd);
-        exit(table_error);
+    int make_table_result = make_table(file_map, my_table, file_size, file_des);
+    if(make_table_result != NO_ERRORS){
+        exit(make_table_result);
     }
-
-    int lines_print_error = print_numbered_line(T,fil_map);
-    if(lines_print_error != NO_ERRORS){
-        free(T);
-        close(fd);
-        exit(lines_print_error);
+    int printing_lines_result = printing_lines(my_table, file_map,file_des,file_size);
+    if(printing_lines_result != NO_ERRORS){
+        exit(printing_lines_result);
     }
-    free(T);
-    int close_f_check = close(fd);
-    if(close_f_check == FILE_OPEN_READ_CLOSE_ERROR){
-        exit(CLOSE_FILE_FAIL);
+    free(my_table);
+    unmapping_result = unmapping_function(file_map,file_size,file_des);
+    if(unmapping_result != NO_ERRORS){
+        exit(unmapping_result);
+    }
+    close_f_check = close_file_function(file_des);
+    if(close_f_check != NO_ERRORS){
+        exit(close_f_check);
     }
     return 0;
 }
