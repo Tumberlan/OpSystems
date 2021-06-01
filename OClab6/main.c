@@ -29,6 +29,7 @@
 #define NO_READING 0
 #define MAX_WAITING_TIME 5000
 #define INPUT_NUMBER_ARRAY_LENGTH 10
+#define DO_AGAIN -2
 
 typedef struct t_e{
     int offset;
@@ -178,9 +179,9 @@ int get_scanned_number_of_line(table* T){
     int number_of_line;
     char input[INPUT_NUMBER_ARRAY_LENGTH];
     char* fgets_check;
-    bool skip = false;
-    bool skip_continue;
-    bool next_iter = false;
+    static bool skip = false;
+    static bool skip_continue;
+    static bool next_iter = false;
     do{
         next_iter = false;
         fgets_check = fgets(input, INPUT_NUMBER_ARRAY_LENGTH+1, stdin);
@@ -190,24 +191,25 @@ int get_scanned_number_of_line(table* T){
         if(skip){
             skip = skip_continue;
             next_iter = true;
-            continue;
+            return DO_AGAIN;
         }
         if(fgets_check == NULL){
             perror("cannot open file");
             return FGETS_ERR;
         }
         if((int)input[0] == '\n'){
-            continue;
+            return DO_AGAIN;
         }
         if(!check_input(input)){
             perror("wrong arguments, please type 1 not negative number");
             check(input, &skip, &skip_continue, &next_iter);
             next_iter = true;
-            continue;
+            return DO_AGAIN;
         }
         number_of_line = atoi(input);
         if(number_of_line > T->current_length || number_of_line < 0){
             perror("unavailable line number, please enter another number");
+            return DO_AGAIN;
         }
         check(input, &skip, &skip_continue, &next_iter);
     }while (number_of_line > T->current_length || number_of_line < 0 || next_iter);
@@ -270,6 +272,9 @@ int print_numbered_line(table* T, int fd) {
         if(pfd.revents) {
             number_of_line = get_scanned_number_of_line(T);
             is_continue = true;
+        }
+        if(number_of_line == DO_AGAIN){
+            continue;
         }
         if(!is_continue){
             perror("no answer");
