@@ -80,25 +80,25 @@ table* init_table(){
     return T;
 }
 
-bool increase_table_capacity(table* T){
-    T->array_length = T->array_length*2;
+bool increase_table_capacity(table* my_table){
+    my_table->array_length = my_table->array_length*2;
     table_elem* tmp = malloc(sizeof (table_elem)*T->array_length);
     if(tmp == NULL){
         perror("no memory for new table element");
         return false;
     }
-    for(int i = 0; i < T->current_length; i++){
-        tmp[i] = T->array[i];
+    for(int i = 0; i < my_table->current_length; i++){
+        tmp[i] = my_table->array[i];
     }
-    free(T->array);
-    T->array = tmp;
+    free(my_table->array);
+    my_table->array = tmp;
     return true;
 }
 
 
 
-bool add_elem_to_table(table* my_table,table_elem* T_elem){
-    if(T_elem == NULL){
+bool add_elem_to_table(table* my_table,table_elem* table_elem){
+    if(table_elem == NULL){
         return false;
     }
     bool no_mistakes_check = true;
@@ -108,7 +108,7 @@ bool add_elem_to_table(table* my_table,table_elem* T_elem){
     if(!no_mistakes_check){
         return false;
     }
-    my_table->array[my_table->current_length] = *T_elem;
+    my_table->array[my_table->current_length] = *table_elem;
     my_table->current_length++;
     return true;
 }
@@ -178,7 +178,8 @@ void check(char* input, bool* skip, bool* skip_continue, bool* next_iter){
     }
 }
 
-int get_scanned_number_of_line(table* my_table){
+
+int get_scanned_number_of_line(table* T){
     int number_of_line;
     char input[INPUT_NUMBER_ARRAY_LENGTH];
     char* fgets_check;
@@ -210,13 +211,14 @@ int get_scanned_number_of_line(table* my_table){
             continue;
         }
         number_of_line = atoi(input);
-        if(number_of_line > my_table->current_length || number_of_line < 0){
+        if(number_of_line > T->current_length || number_of_line < 0){
             perror("unavailable line number, please enter another number");
         }
         check(input, &skip, &skip_continue, &next_iter);
-    }while (number_of_line > my_table->current_length || number_of_line < 0 || next_iter);
+    }while (number_of_line > T->current_length || number_of_line < 0 || next_iter);
     return number_of_line;
 }
+
 
 
 int print_numbered_line(table* my_table, char* file_map) {
@@ -224,10 +226,6 @@ int print_numbered_line(table* my_table, char* file_map) {
     struct pollfd pfd = {0, POLLIN, 0};
     int number_of_line = 1;
     while (number_of_line != 0) {
-        if(pfd.events == NO_READING){
-            perror("can't read");
-            return POLL_ERROR;
-        }
         int poll_check = poll(&pfd, 1, MAX_WAITING_TIME);
         if (poll_check == POLL_ERROR) {
             perror("poll error");
@@ -237,7 +235,15 @@ int print_numbered_line(table* my_table, char* file_map) {
             printf(" no input\n%s\n", file_map);
             return NO_ERRORS;
         }
-        number_of_line = get_scanned_number_of_line(my_table);
+        bool is_continue;
+        if(pfd.revents) {
+            number_of_line = get_scanned_number_of_line(my_table);
+            is_continue = true;
+        }
+        if(!is_continue){
+            perror("no answer");
+            return POLL_ERROR;
+        }
         if (number_of_line == FGETS_ERR) {
             return FGETS_ERR;
         }
@@ -253,10 +259,6 @@ int print_numbered_line(table* my_table, char* file_map) {
         }
         printf("\n");
         number_of_line++;
-        if(pfd.revents){
-            continue;
-        }
-        pfd.events = NO_READING;
     }
     return NO_ERRORS;
 }

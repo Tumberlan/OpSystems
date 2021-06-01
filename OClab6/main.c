@@ -173,6 +173,7 @@ void check(char* input, bool* skip, bool* skip_continue, bool* next_iter){
     }
 }
 
+
 int get_scanned_number_of_line(table* T){
     int number_of_line;
     char input[INPUT_NUMBER_ARRAY_LENGTH];
@@ -243,10 +244,6 @@ int print_numbered_line(table* T, int fd) {
     struct pollfd pfd = {0, POLLIN, 0};
     int number_of_line = 1;
     while (number_of_line != 0) {
-        if(pfd.events == NO_READING){
-            perror("can't read");
-            return POLL_ERROR;
-        }
         int poll_check = poll(&pfd, 1, MAX_WAITING_TIME);
         if (poll_check == POLL_ERROR) {
             perror("poll error");
@@ -257,7 +254,15 @@ int print_numbered_line(table* T, int fd) {
             int print_file_res = print_file(T, fd);
             return print_file_res;
         }
-        number_of_line = get_scanned_number_of_line(T);
+        bool is_continue = false;
+        if(pfd.revents) {
+            number_of_line = get_scanned_number_of_line(T);
+            is_continue = true;
+        }
+        if(!is_continue){
+            perror("no answer");
+            return POLL_ERROR;
+        }
         if (number_of_line == FGETS_ERR) {
             return FGETS_ERR;
         }
@@ -281,17 +286,22 @@ int print_numbered_line(table* T, int fd) {
         }
         printf("\n");
         number_of_line++;
-        if(pfd.revents){
-            continue;
-        }
-        pfd.events = NO_READING;
     }
     return NO_ERRORS;
 
 }
+int close_file_function(int file_des){
+    int close_f_check = close(file_des);
+    if(close_f_check == FILE_OPEN_READ_CLOSE_ERROR) {
+        perror("error in closing file");
+        return CLOSE_FILE_FAIL;
+    }
+    return NO_ERRORS;
+}
 
 int main() {
     char filename[BUF_SIZE];
+    int close_f_check;
     int scanf_checker;
     do{
         scanf_checker = scanf("%s", filename);
@@ -307,25 +317,34 @@ int main() {
     }
     table* T = init_table();
     if(T == NULL){
-        close(fd);
+        close_f_check = close_file_function(fd);
+        if(close_f_check != NO_ERRORS){
+            exit(close_f_check);
+        }
         exit(NO_MEMORY);
     }
     int table_error = fill_table(T, fd);
     if(table_error != NO_ERRORS){
         free(T);
-        close(fd);
+        close_f_check = close_file_function(fd);
+        if(close_f_check != NO_ERRORS){
+            exit(close_f_check);
+        }
         exit(table_error);
     }
     int lines_print_error = print_numbered_line(T,fd);
     if(lines_print_error != NO_ERRORS){
         free(T);
-        close(fd);
+        close_f_check = close_file_function(fd);
+        if(close_f_check != NO_ERRORS){
+            exit(close_f_check);
+        }
         exit(lines_print_error);
     }
     free(T);
-    int close_f_check = close(fd);
-    if(close_f_check == FILE_OPEN_READ_CLOSE_ERROR){
-        exit(CLOSE_FILE_FAIL);
+    close_f_check = close_file_function(fd);
+    if(close_f_check != NO_ERRORS){
+        exit(close_f_check);
     }
     return 0;
 }
