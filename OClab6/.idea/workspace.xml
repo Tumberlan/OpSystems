@@ -11,14 +11,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0819451a-fcbc-4bf4-b261-cd44bdfd278c" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../OClab5/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/../OClab5/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/main.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../OClab7/cmake-build-debug/Testing/Temporary/LastTest.log" beforeDir="false" afterPath="$PROJECT_DIR$/../OClab7/cmake-build-debug/Testing/Temporary/LastTest.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../OClab7/main.c" beforeDir="false" afterPath="$PROJECT_DIR$/../OClab7/main.c" afterDir="false" />
-    </list>
+    <list default="true" id="0819451a-fcbc-4bf4-b261-cd44bdfd278c" name="Default Changelist" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -82,7 +75,7 @@
       <workItem from="1621575619433" duration="47000" />
       <workItem from="1621908757849" duration="6324000" />
       <workItem from="1622482504410" duration="3231000" />
-      <workItem from="1622512187497" duration="1240000" />
+      <workItem from="1622512187497" duration="1548000" />
     </task>
     <servers />
   </component>
