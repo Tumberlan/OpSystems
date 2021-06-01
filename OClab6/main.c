@@ -255,6 +255,18 @@ int print_numbered_line(table* T, int fd) {
             return print_file_res;
         }
         bool is_continue = false;
+        if(pfd.revents == POLLERR){
+            perror("mistake on your device");
+            return POLL_ERROR;
+        }
+        if(pfd.revents == POLLHUP){
+            perror("device connection problems");
+            return POLL_ERROR;
+        }
+        if(pfd.revents == POLLNVAL){
+            perror("no file descriptor match");
+            return POLL_ERROR;
+        }
         if(pfd.revents) {
             number_of_line = get_scanned_number_of_line(T);
             is_continue = true;
@@ -286,6 +298,7 @@ int print_numbered_line(table* T, int fd) {
         }
         printf("\n");
         number_of_line++;
+        pfd.revents = 0;
     }
     return NO_ERRORS;
 

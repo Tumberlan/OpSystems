@@ -36,7 +36,6 @@
 #define MUNMAP_ERROR -1
 #define MAP_ERROR 13
 #define BUF_SIZE 15
-#define NO_READING 0
 #define MAX_WAITING_TIME 5000
 #define INPUT_NUMBER_ARRAY_LENGTH 10
 
@@ -82,7 +81,7 @@ table* init_table(){
 
 bool increase_table_capacity(table* my_table){
     my_table->array_length = my_table->array_length*2;
-    table_elem* tmp = malloc(sizeof (table_elem)*T->array_length);
+    table_elem* tmp = malloc(sizeof (table_elem)*my_table->array_length);
     if(tmp == NULL){
         perror("no memory for new table element");
         return false;
@@ -236,6 +235,18 @@ int print_numbered_line(table* my_table, char* file_map) {
             return NO_ERRORS;
         }
         bool is_continue;
+        if(pfd.revents == POLLERR){
+            perror("mistake on your device");
+            return POLL_ERROR;
+        }
+        if(pfd.revents == POLLHUP){
+            perror("device connection problems");
+            return POLL_ERROR;
+        }
+        if(pfd.revents == POLLNVAL){
+            perror("no file descriptor match");
+            return POLL_ERROR;
+        }
         if(pfd.revents) {
             number_of_line = get_scanned_number_of_line(my_table);
             is_continue = true;
@@ -259,6 +270,7 @@ int print_numbered_line(table* my_table, char* file_map) {
         }
         printf("\n");
         number_of_line++;
+        pfd.revents = 0;
     }
     return NO_ERRORS;
 }
