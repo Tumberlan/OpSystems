@@ -1,0 +1,3 @@
+"C:\Program Files\JetBrains\CLion 2019.3\bin\cmake\win\bin\cmake.exe" -E rm -f CMakeFiles\OClab9.dir/objects.a
+C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\ar.exe cr CMakeFiles\OClab9.dir/objects.a @CMakeFiles\OClab9.dir\objects1.rsp
+C:\PROGRA~1\MINGW-~1\X86_64~1.0-P\mingw64\bin\gcc.exe -g -Wl,--whole-archive CMakeFiles\OClab9.dir/objects.a -Wl,--no-whole-archive -o OClab9.exe -Wl,--out-implib,libOClab9.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\OClab9.dir\linklibs.rsp
